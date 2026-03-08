@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime   @default(now())
+  weekPlans    WeekPlan[]
+  accounts     Account[]
+  sessions     Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Recipe {
+  id              String             @id @default(cuid())
+  name            String
+  description     String?
+  defaultServings Int                @default(4)
+  isVegetarian    Boolean            @default(false)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  ingredients     RecipeIngredient[]
+  meals           Meal[]
+}
+
+model Ingredient {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  defaultUnit String             @default("g")
+  recipes     RecipeIngredient[]
+}
+
+model RecipeIngredient {
+  id           String     @id @default(cuid())
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId     String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+  quantity     Float
+  unit         String
+
+  @@unique([recipeId, ingredientId])
+}
+
+model WeekPlan {
+  id        String   @id @default(cuid())
+  startDate DateTime // toujours un samedi
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals     Meal[]
+
+  @@unique([userId, startDate])
+}
+
+model Meal {
+  id         String   @id @default(cuid())
+  weekPlan   WeekPlan @relation(fields: [weekPlanId], references: [id], onDelete: Cascade)
+  weekPlanId String
+  date       DateTime
+  mealType   MealType
+  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+  recipeId   String
+  servings   Int      @default(4)
+}
+
+enum MealType {
+  LUNCH
+  DINNER
+}
