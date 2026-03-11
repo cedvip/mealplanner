@@ -12,7 +12,10 @@ export async function GET(
   const { id } = await params;
   const recipe = await prisma.recipe.findUnique({
     where: { id },
-    include: { ingredients: { include: { ingredient: true } } },
+    include: {
+      ingredients: { include: { ingredient: true } },
+      steps: { orderBy: { order: "asc" } },
+    },
   });
 
   if (!recipe) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
@@ -33,10 +36,13 @@ export async function PUT(
   if (existing.userId !== session.user.id) return NextResponse.json({ error: "Interdit" }, { status: 403 });
 
   const body = await req.json();
-  const { name, description, defaultServings, isVegetarian, isPublic, ingredients } = body;
+  const { name, description, defaultServings, isVegetarian, isPublic, imageUrl, ingredients, steps } = body;
 
-  // Supprimer les anciens ingrédients et recréer
+  type StepInput = { title?: string; description: string; imageUrl?: string };
+
+  // Supprimer les anciens ingrédients et étapes, puis recréer
   await prisma.recipeIngredient.deleteMany({ where: { recipeId: id } });
+  await prisma.recipeStep.deleteMany({ where: { recipeId: id } });
 
   const recipe = await prisma.recipe.update({
     where: { id },
@@ -46,6 +52,7 @@ export async function PUT(
       defaultServings,
       isVegetarian,
       isPublic: isPublic ?? existing.isPublic,
+      imageUrl: imageUrl !== undefined ? imageUrl : existing.imageUrl,
       ingredients: {
         create: await Promise.all(
           (ingredients ?? []).map(
@@ -64,8 +71,19 @@ export async function PUT(
           )
         ),
       },
+      steps: {
+        create: (steps ?? []).map((step: StepInput, i: number) => ({
+          order: i + 1,
+          title: step.title || null,
+          description: step.description,
+          imageUrl: step.imageUrl ?? null,
+        })),
+      },
     },
-    include: { ingredients: { include: { ingredient: true } } },
+    include: {
+      ingredients: { include: { ingredient: true } },
+      steps: { orderBy: { order: "asc" } },
+    },
   });
 
   return NextResponse.json(recipe);

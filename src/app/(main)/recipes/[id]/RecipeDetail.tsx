@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import RecipeForm from "@/components/RecipeForm";
 import { Leaf, Globe, Lock, Pencil, Trash2 } from "lucide-react";
 
@@ -13,11 +14,19 @@ interface RecipeDetailProps {
     defaultServings: number;
     isVegetarian: boolean;
     isPublic: boolean;
+    imageUrl: string | null;
     userId: string | null;
     ingredients: {
       quantity: number;
       unit: string;
       ingredient: { name: string };
+    }[];
+    steps: {
+      id: string;
+      order: number;
+      title: string | null;
+      description: string;
+      imageUrl: string | null;
     }[];
   };
   currentUserId: string;
@@ -49,10 +58,16 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
             defaultServings: recipe.defaultServings,
             isVegetarian: recipe.isVegetarian,
             isPublic: recipe.isPublic,
+            imageUrl: recipe.imageUrl,
             ingredients: recipe.ingredients.map((ri) => ({
               name: ri.ingredient.name,
               quantity: ri.quantity,
               unit: ri.unit,
+            })),
+            steps: recipe.steps.map((s) => ({
+              title: s.title ?? "",
+              description: s.description,
+              imageUrl: s.imageUrl,
             })),
           }}
         />
@@ -62,6 +77,14 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
 
   return (
     <div className="max-w-xl mx-auto">
+      {/* Photo principale */}
+      {recipe.imageUrl && (
+        <div className="relative w-full rounded-2xl overflow-hidden mb-6" style={{ aspectRatio: "16/9" }}>
+          <Image src={recipe.imageUrl} alt={recipe.name} fill className="object-cover" />
+        </div>
+      )}
+
+      {/* En-tête */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -107,13 +130,15 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
         )}
       </div>
 
+      {/* Description */}
       {recipe.description && (
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
           <p className="text-gray-700 text-sm whitespace-pre-line">{recipe.description}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      {/* Ingrédients */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
         <h2 className="font-semibold text-gray-700 mb-3">Ingrédients</h2>
         {recipe.ingredients.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucun ingrédient renseigné.</p>
@@ -122,18 +147,43 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
             {recipe.ingredients.map((ri, i) => (
               <li key={i} className="flex justify-between text-sm">
                 <span className="text-gray-700">{ri.ingredient.name}</span>
-                <span className="text-gray-500 font-medium">
-                  {ri.quantity} {ri.unit}
-                </span>
+                <span className="text-gray-500 font-medium">{ri.quantity} {ri.unit}</span>
               </li>
             ))}
           </ul>
         )}
       </div>
 
+      {/* Étapes */}
+      {recipe.steps.length > 0 && (
+        <div className="space-y-4 mb-4">
+          <h2 className="font-semibold text-gray-700">Préparation</h2>
+          {recipe.steps.map((step, i) => (
+            <div key={step.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              {step.imageUrl && (
+                <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+                  <Image src={step.imageUrl} alt={step.title ?? `Étape ${i + 1}`} fill className="object-cover" />
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-6 h-6 flex items-center justify-center bg-orange-500 text-white text-xs font-bold rounded-full shrink-0">
+                    {step.order}
+                  </span>
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {step.title ?? `Étape ${step.order}`}
+                  </h3>
+                </div>
+                <p className="text-gray-700 text-sm whitespace-pre-line pl-8">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => router.back()}
-        className="mt-6 text-sm text-gray-500 hover:text-gray-700"
+        className="mt-2 text-sm text-gray-500 hover:text-gray-700"
       >
         ← Retour aux recettes
       </button>

@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 interface Ingredient {
   name: string;
   quantity: number | "";
   unit: string;
+}
+
+interface Step {
+  title: string;
+  description: string;
+  imageUrl: string | null;
 }
 
 interface RecipeFormProps {
@@ -18,7 +25,9 @@ interface RecipeFormProps {
     defaultServings: number;
     isVegetarian: boolean;
     isPublic: boolean;
+    imageUrl?: string | null;
     ingredients: Ingredient[];
+    steps?: Step[];
   };
 }
 
@@ -33,8 +42,12 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
   const [defaultServings, setDefaultServings] = useState(initialData?.defaultServings ?? 4);
   const [isVegetarian, setIsVegetarian] = useState(initialData?.isVegetarian ?? false);
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? false);
+  const [imageUrl, setImageUrl] = useState<string | null>(initialData?.imageUrl ?? null);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients ?? [{ name: "", quantity: "", unit: "g" }]
+  );
+  const [steps, setSteps] = useState<Step[]>(
+    initialData?.steps ?? []
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +66,24 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
     setIngredients(updated);
   }
 
+  function addStep() {
+    setSteps([...steps, { title: "", description: "", imageUrl: null }]);
+  }
+
+  function removeStep(index: number) {
+    setSteps(steps.filter((_, i) => i !== index));
+  }
+
+  function updateStep(index: number, field: keyof Step, value: string | null) {
+    const updated = [...steps];
+    updated[index] = { ...updated[index], [field]: value };
+    setSteps(updated);
+  }
+
+  function getStepLabel(index: number, title: string) {
+    return title.trim() || `Étape ${index + 1}`;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -60,6 +91,7 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
     const validIngredients = ingredients.filter(
       (ing) => ing.name.trim() && ing.quantity !== "" && Number(ing.quantity) > 0
     );
+    const validSteps = steps.filter((s) => s.description.trim());
 
     setLoading(true);
     try {
@@ -75,10 +107,16 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
           defaultServings,
           isVegetarian,
           isPublic,
+          imageUrl,
           ingredients: validIngredients.map((ing) => ({
             name: ing.name.trim(),
             quantity: Number(ing.quantity),
             unit: ing.unit,
+          })),
+          steps: validSteps.map((s) => ({
+            title: s.title.trim() || null,
+            description: s.description.trim(),
+            imageUrl: s.imageUrl,
           })),
         }),
       });
@@ -95,6 +133,12 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
+      {/* Photo principale */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <h2 className="font-semibold text-gray-700 mb-3">Photo principale</h2>
+        <ImageUpload value={imageUrl} onChange={setImageUrl} />
+      </div>
+
       {/* Infos de base */}
       <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
         <h2 className="font-semibold text-gray-700">Informations générales</h2>
@@ -205,6 +249,75 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
         >
           <Plus size={16} />
           Ajouter un ingrédient
+        </button>
+      </div>
+
+      {/* Étapes */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <h2 className="font-semibold text-gray-700">Étapes de préparation</h2>
+
+        {steps.length === 0 && (
+          <p className="text-sm text-gray-400">Aucune étape pour l&apos;instant. Ajoutez-en une ci-dessous.</p>
+        )}
+
+        {steps.map((step, i) => (
+          <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GripVertical size={16} className="text-gray-300" />
+                <span className="text-sm font-semibold text-orange-500">
+                  {getStepLabel(i, step.title)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeStep(i)}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Titre personnalisé (optionnel)
+              </label>
+              <input
+                value={step.title}
+                onChange={(e) => updateStep(i, "title", e.target.value)}
+                placeholder={`Étape ${i + 1}`}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Instructions *
+              </label>
+              <textarea
+                value={step.description}
+                onChange={(e) => updateStep(i, "description", e.target.value)}
+                rows={3}
+                placeholder="Décrivez ce qu'il faut faire..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+              />
+            </div>
+
+            <ImageUpload
+              value={step.imageUrl}
+              onChange={(url) => updateStep(i, "imageUrl", url)}
+              label="Photo de l'étape (optionnel)"
+            />
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addStep}
+          className="flex items-center gap-2 text-orange-500 hover:text-orange-600 text-sm font-medium"
+        >
+          <Plus size={16} />
+          Ajouter une étape
         </button>
       </div>
 

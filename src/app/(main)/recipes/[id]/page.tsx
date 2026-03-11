@@ -16,7 +16,10 @@ export default async function RecipePage({
 
   const recipe = await prisma.recipe.findUnique({
     where: { id },
-    include: { ingredients: { include: { ingredient: true } } },
+    include: {
+      ingredients: { include: { ingredient: true } },
+      steps: { orderBy: { order: "asc" } },
+    },
   });
 
   if (!recipe) notFound();
