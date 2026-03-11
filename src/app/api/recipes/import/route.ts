@@ -26,6 +26,24 @@ Règles :
 - Les titres d'étapes peuvent être null si non précisés
 - quantity doit être un nombre (pas une chaîne)`;
 
+function extractJsonLd(html: string): string | null {
+  const matches = html.matchAll(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
+  for (const match of matches) {
+    try {
+      const data = JSON.parse(match[1]);
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        if (item["@type"] === "Recipe" || (Array.isArray(item["@type"]) && item["@type"].includes("Recipe"))) {
+          return JSON.stringify(item);
+        }
+      }
+    } catch {
+      // ignore malformed JSON-LD
+    }
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -37,16 +55,27 @@ export async function POST(req: NextRequest) {
     let content: Anthropic.MessageParam["content"];
 
     if (url) {
-      // Fetch the page HTML
       let pageText = "";
       try {
         const res = await fetch(url, {
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; MealPlanner/1.0)" },
-          signal: AbortSignal.timeout(8000),
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+          signal: AbortSignal.timeout(10000),
         });
         const html = await res.text();
-        // Strip HTML tags and trim
-        pageText = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 8000);
+
+        // Essaie d'abord d'extraire les données structurées JSON-LD (Marmiton, 750g, etc.)
+        const jsonLd = extractJsonLd(html);
+        if (jsonLd) {
+          pageText = `Données structurées schema.org/Recipe de la page :\n${jsonLd.slice(0, 10000)}`;
+        } else {
+          // Fallback : texte brut sans balises HTML
+          pageText = html.replace(/<script[\s\S]*?<\/script>/gi, " ")
+            .replace(/<style[\s\S]*?<\/style>/gi, " ")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 8000);
+        }
       } catch {
         return NextResponse.json({ error: "Impossible de charger cette URL. Essayez avec une photo." }, { status: 422 });
       }
@@ -55,7 +84,7 @@ export async function POST(req: NextRequest) {
       content = [
         {
           type: "image",
-          source: { type: "base64", media_type: mimeType, data: imageBase64 },
+          source: { type: "base64", media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: imageBase64 },
         },
         {
           type: "text",
@@ -67,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     const message = await client.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content }],
