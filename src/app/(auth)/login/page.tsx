@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered") === "1";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +43,12 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-orange-600">🍽️ MealPlanner</h1>
           <p className="text-gray-500 mt-1 text-sm">Connexion famille</p>
         </div>
+
+        {registered && (
+          <p className="text-green-600 text-sm text-center bg-green-50 rounded-lg py-2 px-3 mb-4">
+            Compte créé ! Connectez-vous maintenant.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

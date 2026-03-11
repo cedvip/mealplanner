@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -40,17 +39,8 @@ export default function RegisterPage() {
       return;
     }
 
-    // Connexion automatique après inscription
-    const result = await signIn("credentials", { email, password, redirect: false });
-
     setLoading(false);
-
-    if (result?.error) {
-      setError("Compte créé mais connexion échouée. Essayez de vous connecter.");
-      router.push("/login");
-    } else {
-      router.push("/calendar");
-    }
+    router.push("/login?registered=1");
   }
 
   return (
