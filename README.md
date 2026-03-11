@@ -130,10 +130,55 @@ FAMILY_PASSWORD    # Mot de passe du compte par défaut (seed)
 ## Commandes utiles
 
 ```bash
-npm run dev              # Démarrer en développement
+npm run dev              # Démarrer en développement (port 3001)
 npm run build            # Build de production
-npx prisma studio        # Interface visuelle pour la BDD
+npx prisma studio        # Interface visuelle pour la BDD (port 5555)
 npx prisma db push       # Appliquer le schéma sans migration
 npx prisma migrate dev   # Créer une migration
-npx tsx prisma/seed.ts   # Peupler la BDD avec les données initiales
+npm run db:seed          # Peupler la BDD avec les données initiales
 ```
+
+---
+
+## Développement local & debug
+
+### Démarrer l'app
+
+```bash
+npm run dev
+```
+
+L'app tourne sur **http://localhost:3001** (port 3001 pour éviter les conflits).
+
+### Inspecter la base de données
+
+```bash
+npx prisma studio
+```
+
+Ouvre une interface graphique sur **http://localhost:5555** pour voir et modifier
+directement les tables (Users, Recipes, Meals, etc.) en temps réel.
+
+### Logs NextAuth détaillés
+
+Pour voir les détails du middleware d'authentification et des callbacks :
+
+```bash
+AUTH_LOG=1 npm run dev
+```
+
+### Tester les routes API
+
+Depuis le terminal (exemple pour créer un compte) :
+
+```bash
+curl -X POST http://localhost:3001/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","email":"test@test.fr","password":"123456"}'
+```
+
+### Points importants
+
+- Le `.env` pointe sur la **vraie BDD Neon** — les tests locaux créent de vrais comptes
+- Les variables `FAMILY_EMAIL` / `FAMILY_PASSWORD` dans `.env` sont utilisées par le seed
+- Le `AUTH_SECRET` local est différent de la prod (normal)
