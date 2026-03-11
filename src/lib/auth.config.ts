@@ -12,6 +12,10 @@ export const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith("/login") ||
         nextUrl.pathname.startsWith("/register");
 
+      const isPublicApi = nextUrl.pathname === "/api/register";
+
+      if (isPublicApi) return true;
+
       if (isAuthPage) {
         if (isLoggedIn) return Response.redirect(new URL("/calendar", nextUrl));
         return true;
