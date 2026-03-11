@@ -27,8 +27,13 @@ export async function PUT(
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { id } = await params;
+
+  const existing = await prisma.recipe.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  if (existing.userId !== session.user.id) return NextResponse.json({ error: "Interdit" }, { status: 403 });
+
   const body = await req.json();
-  const { name, description, defaultServings, isVegetarian, ingredients } = body;
+  const { name, description, defaultServings, isVegetarian, isPublic, ingredients } = body;
 
   // Supprimer les anciens ingrédients et recréer
   await prisma.recipeIngredient.deleteMany({ where: { recipeId: id } });
@@ -40,6 +45,7 @@ export async function PUT(
       description,
       defaultServings,
       isVegetarian,
+      isPublic: isPublic ?? existing.isPublic,
       ingredients: {
         create: await Promise.all(
           (ingredients ?? []).map(
@@ -73,6 +79,11 @@ export async function DELETE(
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { id } = await params;
+
+  const existing = await prisma.recipe.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+  if (existing.userId !== session.user.id) return NextResponse.json({ error: "Interdit" }, { status: 403 });
+
   await prisma.recipe.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

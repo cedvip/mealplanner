@@ -17,6 +17,7 @@ interface RecipeFormProps {
     description: string;
     defaultServings: number;
     isVegetarian: boolean;
+    isPublic: boolean;
     ingredients: Ingredient[];
   };
 }
@@ -31,6 +32,7 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [defaultServings, setDefaultServings] = useState(initialData?.defaultServings ?? 4);
   const [isVegetarian, setIsVegetarian] = useState(initialData?.isVegetarian ?? false);
+  const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? false);
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients ?? [{ name: "", quantity: "", unit: "g" }]
   );
@@ -72,6 +74,7 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
           description,
           defaultServings,
           isVegetarian,
+          isPublic,
           ingredients: validIngredients.map((ing) => ({
             name: ing.name.trim(),
             quantity: Number(ing.quantity),
@@ -131,15 +134,27 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer mt-4">
-            <input
-              type="checkbox"
-              checked={isVegetarian}
-              onChange={(e) => setIsVegetarian(e.target.checked)}
-              className="w-4 h-4 accent-green-500"
-            />
-            <span className="text-sm font-medium text-gray-700">🥦 Recette végétarienne</span>
-          </label>
+          <div className="flex flex-col gap-2 mt-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isVegetarian}
+                onChange={(e) => setIsVegetarian(e.target.checked)}
+                className="w-4 h-4 accent-green-500"
+              />
+              <span className="text-sm font-medium text-gray-700">🥦 Recette végétarienne</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="w-4 h-4 accent-orange-500"
+              />
+              <span className="text-sm font-medium text-gray-700">🌐 Recette publique</span>
+              <span className="text-xs text-gray-400">(visible par tous les utilisateurs)</span>
+            </label>
+          </div>
         </div>
       </div>
 

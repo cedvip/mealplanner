@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Plus, Leaf } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { Plus, Leaf, Globe, Lock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecipesPage() {
+  const session = await auth();
+  const userId = session!.user.id;
+
   const recipes = await prisma.recipe.findMany({
+    where: { OR: [{ isPublic: true }, { userId }] },
     orderBy: { name: "asc" },
     include: { _count: { select: { ingredients: true } } },
   });
@@ -13,7 +18,7 @@ export default async function RecipesPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Mes recettes</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Recettes</h1>
         <Link
           href="/recipes/new"
           className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
@@ -37,7 +42,7 @@ export default async function RecipesPage() {
               className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
             >
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-800">{recipe.name}</span>
                   {recipe.isVegetarian && (
                     <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -45,6 +50,17 @@ export default async function RecipesPage() {
                       Végé
                     </span>
                   )}
+                  {recipe.isPublic ? (
+                    <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                      <Globe size={10} />
+                      Public
+                    </span>
+                  ) : recipe.userId === userId ? (
+                    <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                      <Lock size={10} />
+                      Privé
+                    </span>
+                  ) : null}
                 </div>
                 {recipe.description && (
                   <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{recipe.description}</p>

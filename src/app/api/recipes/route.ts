@@ -6,7 +6,10 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const userId = session.user.id;
+
   const recipes = await prisma.recipe.findMany({
+    where: { OR: [{ isPublic: true }, { userId }] },
     include: { ingredients: { include: { ingredient: true } } },
     orderBy: { name: "asc" },
   });
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const body = await req.json();
-  const { name, description, defaultServings, isVegetarian, ingredients } = body;
+  const { name, description, defaultServings, isVegetarian, isPublic, ingredients } = body;
 
   if (!name) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
@@ -29,6 +32,8 @@ export async function POST(req: NextRequest) {
       description,
       defaultServings: defaultServings ?? 4,
       isVegetarian: isVegetarian ?? false,
+      isPublic: isPublic ?? false,
+      userId: session.user.id,
       ingredients: {
         create: await Promise.all(
           (ingredients ?? []).map(

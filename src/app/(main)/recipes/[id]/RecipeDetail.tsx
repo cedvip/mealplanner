@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import RecipeForm from "@/components/RecipeForm";
-import { Leaf, Pencil, Trash2 } from "lucide-react";
+import { Leaf, Globe, Lock, Pencil, Trash2 } from "lucide-react";
 
 interface RecipeDetailProps {
   recipe: {
@@ -12,18 +12,22 @@ interface RecipeDetailProps {
     description: string | null;
     defaultServings: number;
     isVegetarian: boolean;
+    isPublic: boolean;
+    userId: string | null;
     ingredients: {
       quantity: number;
       unit: string;
       ingredient: { name: string };
     }[];
   };
+  currentUserId: string;
 }
 
-export default function RecipeDetail({ recipe }: RecipeDetailProps) {
+export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const isOwner = recipe.userId === currentUserId;
 
   async function handleDelete() {
     if (!confirm("Supprimer cette recette ?")) return;
@@ -44,6 +48,7 @@ export default function RecipeDetail({ recipe }: RecipeDetailProps) {
             description: recipe.description ?? "",
             defaultServings: recipe.defaultServings,
             isVegetarian: recipe.isVegetarian,
+            isPublic: recipe.isPublic,
             ingredients: recipe.ingredients.map((ri) => ({
               name: ri.ingredient.name,
               quantity: ri.quantity,
@@ -59,7 +64,7 @@ export default function RecipeDetail({ recipe }: RecipeDetailProps) {
     <div className="max-w-xl mx-auto">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-800">{recipe.name}</h1>
             {recipe.isVegetarian && (
               <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -67,26 +72,39 @@ export default function RecipeDetail({ recipe }: RecipeDetailProps) {
                 Végé
               </span>
             )}
+            {recipe.isPublic ? (
+              <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                <Globe size={10} />
+                Public
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                <Lock size={10} />
+                Privé
+              </span>
+            )}
           </div>
           <p className="text-sm text-gray-500 mt-1">Pour {recipe.defaultServings} personnes</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Pencil size={14} />
-            Modifier
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-1 text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-          >
-            <Trash2 size={14} />
-            Supprimer
-          </button>
-        </div>
+        {isOwner && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Pencil size={14} />
+              Modifier
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1 text-sm text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <Trash2 size={14} />
+              Supprimer
+            </button>
+          </div>
+        )}
       </div>
 
       {recipe.description && (
