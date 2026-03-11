@@ -3,17 +3,48 @@
 import { useEffect, useState } from "react";
 import RecipeForm from "@/components/RecipeForm";
 
+type ImportedRecipe = {
+  name: string;
+  description: string | null;
+  defaultServings: number;
+  isVegetarian: boolean;
+  isPublic?: boolean;
+  ingredients: { name: string; quantity: number; unit: string }[];
+  steps: { title: string | null; description: string; imageUrl?: string | null }[];
+};
+
+function normalize(data: ImportedRecipe) {
+  return {
+    name: data.name ?? "",
+    description: data.description ?? "",
+    defaultServings: Number(data.defaultServings) || 4,
+    isVegetarian: Boolean(data.isVegetarian),
+    isPublic: Boolean(data.isPublic),
+    imageUrl: null,
+    ingredients: (data.ingredients ?? []).map((ing) => ({
+      name: ing.name ?? "",
+      quantity: Number(ing.quantity) || 0,
+      unit: ing.unit ?? "g",
+    })),
+    steps: (data.steps ?? []).map((s) => ({
+      title: s.title ?? "",
+      description: s.description ?? "",
+      imageUrl: s.imageUrl ?? null,
+    })),
+  };
+}
+
 export default function NewRecipePage() {
-  const [importedData, setImportedData] = useState<Parameters<typeof RecipeForm>[0]["initialData"] | undefined>(undefined);
+  const [importedData, setImportedData] = useState<ReturnType<typeof normalize> | undefined>(undefined);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("recipe_import");
     if (raw) {
       try {
-        setImportedData(JSON.parse(raw));
+        setImportedData(normalize(JSON.parse(raw)));
       } catch {
-        // ignore
+        // ignore malformed data
       }
       sessionStorage.removeItem("recipe_import");
     }
