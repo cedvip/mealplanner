@@ -221,12 +221,12 @@ export default function RecipeForm({ initialData }: RecipeFormProps) {
               value={ing.quantity}
               onChange={(e) => updateIngredient(i, "quantity", e.target.value)}
               placeholder="Qté"
-              className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-14 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <select
               value={ing.unit}
               onChange={(e) => updateIngredient(i, "unit", e.target.value)}
-              className="w-20 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-16 border border-gray-300 rounded-lg px-1 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
               {UNITS.map((u) => (
                 <option key={u} value={u}>{u}</option>
