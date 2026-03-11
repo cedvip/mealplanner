@@ -26,7 +26,6 @@ interface CalendarClientProps {
   recipes: Recipe[];
 }
 
-const DAY_LABELS = ["Sam", "Dim", "Lun", "Mar", "Mer", "Jeu", "Ven"];
 
 export default function CalendarClient({ weekStart, meals, recipes }: CalendarClientProps) {
   const router = useRouter();
@@ -118,7 +117,7 @@ export default function CalendarClient({ weekStart, meals, recipes }: CalendarCl
           <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-orange-50 px-4 py-2 border-b border-orange-100">
               <span className="font-semibold text-orange-700 text-sm">
-                {DAY_LABELS[i]} {day.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                {day.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
               </span>
             </div>
             <div className="divide-y divide-gray-50">

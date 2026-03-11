@@ -13,7 +13,7 @@ export default async function MainLayout({
   return (
     <div className="flex min-h-screen bg-gray-50">
       <NavBar />
-      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">{children}</main>
+      <main className="flex-1 min-w-0 overflow-x-hidden p-4 md:p-8 pb-20 md:pb-8">{children}</main>
     </div>
   );
 }
