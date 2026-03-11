@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Plus, Leaf, Globe, Lock } from "lucide-react";
+import RecipeImportButton from "@/components/RecipeImportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,16 @@ export default async function RecipesPage() {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Recettes</h1>
-        <Link
-          href="/recipes/new"
-          className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
-        >
-          <Plus size={16} />
-          Nouvelle recette
-        </Link>
+        <div className="flex items-center gap-2">
+          <RecipeImportButton />
+          <Link
+            href="/recipes/new"
+            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
+          >
+            <Plus size={16} />
+            Nouvelle
+          </Link>
+        </div>
       </div>
 
       {recipes.length === 0 ? (
