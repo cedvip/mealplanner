@@ -4,7 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import RecipeForm from "@/components/RecipeForm";
-import { Leaf, Globe, Lock, Pencil, Trash2 } from "lucide-react";
+import { Leaf, Globe, Lock, Pencil, Trash2, Users } from "lucide-react";
+
+function formatQuantity(value: number): string {
+  if (value === 0) return "0";
+  const rounded = Math.round(value * 100) / 100;
+  // Affiche comme entier si possible, sinon 1 ou 2 décimales
+  if (Number.isInteger(rounded)) return String(rounded);
+  const oneDecimal = Math.round(value * 10) / 10;
+  if (Math.abs(oneDecimal - value) < 0.005) return oneDecimal.toFixed(1).replace(/\.0$/, "");
+  return (Math.round(value * 100) / 100).toFixed(2).replace(/\.?0+$/, "");
+}
 
 interface RecipeDetailProps {
   recipe: {
@@ -36,7 +46,9 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [servings, setServings] = useState(recipe.defaultServings);
   const isOwner = recipe.userId === currentUserId;
+  const ratio = servings / recipe.defaultServings;
 
   async function handleDelete() {
     if (!confirm("Supprimer cette recette ?")) return;
@@ -107,7 +119,20 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 mt-1">Pour {recipe.defaultServings} personnes</p>
+          <div className="flex items-center gap-2 mt-1">
+            <Users size={13} className="text-gray-400" />
+            <button
+              onClick={() => setServings((s) => Math.max(1, s - 1))}
+              className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 text-sm font-bold leading-none"
+            >−</button>
+            <span className="text-sm text-gray-700 font-medium w-20 text-center">
+              {servings} {servings === 1 ? "personne" : "personnes"}
+            </span>
+            <button
+              onClick={() => setServings((s) => s + 1)}
+              className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 text-sm font-bold leading-none"
+            >+</button>
+          </div>
         </div>
         {isOwner && (
           <div className="flex gap-2">
@@ -147,7 +172,7 @@ export default function RecipeDetail({ recipe, currentUserId }: RecipeDetailProp
             {recipe.ingredients.map((ri, i) => (
               <li key={i} className="flex justify-between text-sm">
                 <span className="text-gray-700">{ri.ingredient.name}</span>
-                <span className="text-gray-500 font-medium">{ri.quantity} {ri.unit}</span>
+                <span className="text-gray-500 font-medium">{formatQuantity(ri.quantity * ratio)} {ri.unit}</span>
               </li>
             ))}
           </ul>
